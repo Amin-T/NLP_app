@@ -1,0 +1,4 @@
+beautifulsoup4==4.9.3
+elementpath==2.2.3
+soupsieve==2.2.1
+xmlschema==1.6.4
