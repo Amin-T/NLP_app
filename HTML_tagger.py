@@ -105,6 +105,7 @@ class HTMLtagger():
                     fact = tag.string
                 try:
                     format = tag['format'].split(':')[-1]
+                    Tags_dict[id]['Attributes']['Format'] = format
                 except:
                     pass
                 try:
@@ -112,20 +113,19 @@ class HTMLtagger():
                         sign = 'Negative'
                 except:
                     sign = 'Positive'
+                Tags_dict[id]['Attributes']['Sign'] = sign
+
                 try:
                     measure = tag['unitref']
+                    Tags_dict[id]['Attributes']['Measure'] = measure
                 except:
                     pass
                 try:
                     scale = tag['scale']
+                    Tags_dict[id]['Attributes']['Scale'] = scale
                 except:
                     pass
                 
-                Tags_dict[id]['Attributes']['Format'] = format
-                Tags_dict[id]['Attributes']['Measure'] = measure
-                Tags_dict[id]['Attributes']['Scale'] = scale
-                Tags_dict[id]['Attributes']['Sign'] = sign
-
             else:
                 fact = tag.string
 
@@ -133,12 +133,15 @@ class HTMLtagger():
             Tags_dict[id]['Attributes']['Fact'] = fact
 
             try:
-                start = xbrl_context.find_all(id=contextref)[0].find('xbrli:startdate').text
-                end = xbrl_context.find_all(id=contextref)[0].find('xbrli:startdate').text
+                start = xbrl_context.find(id=contextref).find('xbrli:startdate').text
+                end = xbrl_context.find(id=contextref).find('xbrli:startdate').text
                 Tags_dict[id]['Attributes']['Period'] = start + ' to ' + end
             except:
-                date = xbrl_context.find_all(id=contextref)[0].find('xbrli:instant').text
-                Tags_dict[id]['Attributes']['Period'] = 'As of ' + end
+                try:
+                    date = xbrl_context.find(id=contextref).find('xbrli:instant').text
+                    Tags_dict[id]['Attributes']['Period'] = 'As of ' + date
+                except:
+                    pass
 
             if xs:
                 Tags_dict[id]['Attributes']['Type'] = strDetached(xs.get('@type'))
