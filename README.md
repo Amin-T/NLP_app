@@ -7,6 +7,7 @@ extract financial elements and entities from the text and provide tags in the do
 
 Import the tagger as:
 
-'''
+```
 from HTML_tagger import HTMLtagger
-'''
+```
+
