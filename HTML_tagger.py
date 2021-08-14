@@ -5,10 +5,7 @@ from zipfile import ZipFile
 from io import BytesIO
 import requests
 import pandas as pd
-
-# Function to filter html elements having "name" attribute
-def has_name(tag):
-    return tag.has_attr('name')
+from Xbrl_Parser import read_xbrl
 
 # Function to filter html elements having "name" and "id" attributes
 def has_name_id(tag):
@@ -60,6 +57,8 @@ class HTMLtagger():
         if get_html:
             return parsed_html
 
+        print(f'{file} loaded.')
+
 
     def LoadTaxonomy(self):
         """
@@ -79,6 +78,8 @@ class HTMLtagger():
                 file = zipObj.open(zipObj.namelist()[0])
 
             self.taxonomy = file
+
+            print(f'Taxonomy excel file downloaded.')
         
         else:
             all_files = glob.glob(self.resources + '/*.xsd')
@@ -90,13 +91,15 @@ class HTMLtagger():
 
             self.taxonomy = xsd_dict
 
-        #return xsd_dict
+            print(f'Taxonomy resources loaded from: {self.resources}')
 
 
-    def GetTags(self):
+    def GetTags(self, comprehensive=False, xbrl_path=None):
         """
-        Tags the elements in the HTML file.
-        Returns the dict of tagged id.
+        Tags the elements in the HTML file. Returns the dict of tagged id.
+
+        comprehensive: if "True", the previously filed xbrl document is used for a comprehensive tagging.
+        xbrl_path: file path of the previously filed xbrl document
         """
         tags = self.parsed_html.body.find_all(has_name_id)
         xbrl_context = self.parsed_html.body.find('ix:header')
@@ -107,6 +110,9 @@ class HTMLtagger():
             References_df = pd.read_excel(self.taxonomy, sheet_name='References', header=1)
         else:
             xs_element = self.taxonomy.get('xs:element')
+
+        if comprehensive:
+            previous_tags = read_xbrl(file_path=xbrl_path)
 
         for tag in tags:
             name = tag['name']
@@ -174,10 +180,15 @@ class HTMLtagger():
             
             if self.resources == 'xlsx':
                 name_Elements_df = Elements_df[Elements_df['name'] == name.split(':')[-1]]
+                
                 if not name_Elements_df.empty:
                     Tags_dict[id]['Attributes']['Type'] = name_Elements_df['type'].values[0].split(':')[-1]
                     Tags_dict[id]['Labels']['Documentation'] = name_Elements_df['documentation'].values[0]
                     Tags_dict[id]['Labels']['Label'] = name_Elements_df['label'].values[0]
+
+                elif comprehensive:
+                    if name.split(':')[-1] in previous_tags.keys():
+                        Tags_dict[id]['Attributes']['Type'] = previous_tags[name.split(':')[-1]]['type'].split(':')[-1]
 
                 name_References_df = References_df[References_df['name'] == name.split(':')[-1]]
                 if not name_References_df.empty:
@@ -186,6 +197,7 @@ class HTMLtagger():
                     Tags_dict[id]['References']['Publisher'] = name_References_df['Publisher'].values[0]
                     Tags_dict[id]['References']['Section'] = name_References_df['Section'].values[0]
                     Tags_dict[id]['References']['Subsection'] = name_References_df['Subsection'].values[0]
+
             else:
                 xs = {}
                 for d in xs_element:
