@@ -11,4 +11,5 @@ Output.zip
 /cache
 comparison_table.xlsx
 tagging_comparison.ipynb
-
+/Trained_NER
+sample_train_text.txt
